@@ -13,12 +13,13 @@ _3 Cyrpto Corgis are wrapped together and locked in a contract to create a singl
   * The minimum `rate` that needs to be streamed to unlocked
   * The `duration` that the stream needs to be before unlocking
   * `[(contractAddress, tokenId, rate, duration), ... ]`
-* Each Crypto Corgi SUNFT...
-  * is minted by passing in a list of tuples described above
-  * must be _fed_ by streaming in DAIx
+* Each SUNFT...
+  * is _minted_ by passing in the first NFT to add to the SUNFT
+  * can have more NFTs _appended_ to it
+  * is _funded_ by streaming in DAIx into the SUNFT
   * can be _unlocked_ to recover the art after streaming for the specified rate and duration
-  * must be _destroyed_ to recover the deposits plus an interest earned
-  * can be destroyed early before the locked NFTs are unlocked, the NFTs will return to the minter
+  * must be _destroyed_ to recover the deposits
+  * can be destroyed early before the locked NFTs are unlocked, the NFTs will return to this SUNFT's _creator_
 
 ## Protocol Specification
 
@@ -34,7 +35,7 @@ _3 Cyrpto Corgis are wrapped together and locked in a contract to create a singl
 
 #### `StreamUnlockableNFT`
 * `mapping (uint256 => LockableNFT) nfts` - The sequence of `LockableNFT` that make up this SUNFT
-* `address creator` - The creator/minter of this SUNFT
+* `address creator` - The minter of this SUNFT
 * `uint256 progress` - The amount of time in seconds that the stream has been opened, resets after each NFT in the `nfts` sequence becomes unlocked
 * `uint256 lastStartedAt` - The timestamp when the last stream was started/updated
 * `uint256 nextUnlockedIndex` - An index tracking which of the `nfts` is currently being worked on
@@ -45,7 +46,7 @@ _3 Cyrpto Corgis are wrapped together and locked in a contract to create a singl
 ### Parameters
   * `address queen` - The owner of the contract and the address authorized to collect fees
   * `mapping (uint256 => StreamUnlockableNFT) sunfts` - A mapping of SUNFT `tokenId`s to their respective `StreamUnlockableNFT`
-  * `address feedToken` - The token used to feed the corgi NFTs
+  * `address depositToken` - The token used to feed the corgi NFTs
   * `uint256 mintingFee` - The fee to mint a SUNFT
   * `address mintingFeeToken` - The token accepted as the minting fee, 0x0 for ETH
 
@@ -53,12 +54,11 @@ _3 Cyrpto Corgis are wrapped together and locked in a contract to create a singl
 * `onlyRoyalty` - modifies methods so they can only be called by the `queen`
 
 ### Methods
-#### mint(mapping(uint256 => LockableNFT) nftsToLock, uint256 size)
+#### mint(LockableNFT nftToLock)
 * Parameters
-  * `nftsToLock` - A sequence of NFTs to lock into this SUNFT
-  * `size` - the number of `nftsToLock`
+  * `nftToLock` - A sequence of NFTs to lock into this SUNFT
 * Pre-conditions
-  * `msg.sender` has approved this contract to transfer all NFTs referenced in `nftsToLock`
+  * `msg.sender` has approved this contract to transfer `nftToLock`
   * `msg.sender` has approved this contract to transfer `mintingFee` of `mintingFeeToken`s
 * Post-conditions
   * all `nftsToLock` are transferred to this contract
@@ -73,6 +73,19 @@ _3 Cyrpto Corgis are wrapped together and locked in a contract to create a singl
   * Opens a superfluid stream to this contract
   * Sets `lastStartedAt` to now
 
+#### tryUnlock(uint256 sunftId)
+  * Parameters
+    * `sunftId` - The id of the SUNFT to try to unlock/update
+  * Pre-conditions
+    * None
+  * Post-conditions
+    * Computes the net amount streamed and updates `principal`
+    * Updates progress with the `block.timestamp - lastStartedAt`
+    * If `progress >= nfts[nextUnlockedIndex].duration` and `msg.sender == nfts[nextUnlockedIndex].owner`
+      * Unlock the nft at `nextUnlockedIndex` and transfer it to the SUNFTs owner
+      * Increment `nextUnlockedIndex`
+      * Reset progress to 0
+
 #### stop(uint256 sunftId)
 * Parameters
   * `sunftId` - The id of the SUNFT to stop streaming `feedToken` to
@@ -80,12 +93,7 @@ _3 Cyrpto Corgis are wrapped together and locked in a contract to create a singl
   * None
 * Post-conditions
   * Closes a superfluid stream to this contract
-  * Computes the net amount streamed and updates `principal`
-  * Updates progress with the `block.timestamp - lastStartedAt`
-  * If `progress >= nfts[nextUnlockedIndex].duration`
-    * Unlock the nft at `nextUnlockedIndex` and transfer it to the SUNFTs owner
-    * Increment `nextUnlockedIndex`
-    * Reset progress to 0
+  * Call `tryUnlock`
 
 #### destroy(uint256 sunftId)
 * Parameters
