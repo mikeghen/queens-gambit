@@ -81,14 +81,14 @@ _3 Cyrpto Corgis are wrapped together and locked in a contract to create a singl
   * Post-conditions
     * Computes the net amount streamed and updates `principal`
     * Updates progress with the `block.timestamp - lastStartedAt`
-    * If `progress >= nfts[nextUnlockedIndex].duration` and `msg.sender == nfts[nextUnlockedIndex].owner`
+    * If `progress >= nfts[nextUnlockedIndex].duration` and `msg.sender == owner`
       * Unlock the nft at `nextUnlockedIndex` and transfer it to the SUNFTs owner
       * Increment `nextUnlockedIndex`
       * Reset progress to 0
 
 #### stop(uint256 sunftId)
 * Parameters
-  * `sunftId` - The id of the SUNFT to stop streaming `feedToken` to
+  * `sunftId` - The id of the SUNFT to stop streaming `depositToken` to
 * Pre-conditions
   * None
 * Post-conditions
@@ -99,12 +99,12 @@ _3 Cyrpto Corgis are wrapped together and locked in a contract to create a singl
 * Parameters
   * `sunftId` - The id of the SUNFT to destroy
 * Pre-conditions
-  * The message sender is the holder of the SUNFT at `sunftId`
+  * The message sender is the `owner` of the SUNFT at `sunftId`
 * Post-conditions
   * The NFT is burned
   * If any `nfts` are still not unlocked
-    * `principal * 0.95` amount of `feedToken` is transfered to `msg.sender`
-    * `principal * 0.05` amount of `feedToken` is transfered to `queen` (early withdraw penalty)
+    * `principal * 0.95` amount of `depositToken` is transfered to `msg.sender`
+    * `principal * 0.05` amount of `depositToken` is transfered to `queen` (early withdraw penalty)
     * Transfer them back to the `creator`
   * Otherwise
     * `principal` amount of `feedToken` is transfered to `msg.sender`
