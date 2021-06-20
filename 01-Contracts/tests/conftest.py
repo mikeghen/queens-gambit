@@ -29,7 +29,6 @@ def gambit(SimpleNFT, queen, creator, owner):
     _nft = queen.deploy(StreamUnlockableNFTFactory)
     return _nft
 
-
 @pytest.fixture
 def nft(SimpleNFT, queen, creator, owner):
     """An NFT contract with a few NFTs minted to creator"""
@@ -53,3 +52,15 @@ def stream_rate():
 @pytest.fixture
 def minting_fee():
     return 1e18
+
+@pytest.fixture
+def sunft(nft, gambit, queen, creator, owner, seven_days, stream_rate):
+    # Approve 2 NFTs to lock into a SUNFT
+    nft.approve(gambit.address, 0, {"from": creator})
+    nft.approve(gambit.address, 1, {"from": creator})
+
+    # Mint the SUNFT directly to its owner, append the 2nd NFT after mint
+    _sunft_id = gambit.mint(nft.address, 0, stream_rate, seven_days, owner, {"from": creator}).return_value
+    gambit.append(nft.address, 1, stream_rate, seven_days, 1, {"from": creator})
+
+    return _sunft_id

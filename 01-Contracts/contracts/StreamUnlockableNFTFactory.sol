@@ -69,6 +69,9 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
     function append(address contractAddress, uint256 tokenId, uint256 rate, uint256 duration, uint256 sunftId)
       onlyCreator(tokenId) public returns(uint256) {
 
+      // Transfer the NFT into the contract
+      IERC721(contractAddress).transferFrom(msg.sender, address(this), tokenId);
+
       // Initialize a new SUNFT
       // TODO: Dry this out?
       uint256 index = sunfts[sunftId].nfts.length;

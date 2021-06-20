@@ -18,40 +18,41 @@ Test Suite Outline
 - SUNFTs will return locked NFTs to the creator if destoryed before unlocking
 """
 #
-def test_mint_snuft(gambit, nft, creator, owner, stream_rate, seven_days):
+def test_mint_snuft(gambit, nft, sunft, creator, owner, stream_rate, seven_days):
     """
     SUNFTs can be minted by an NFT holder
     """
     starting_eth = gambit.balance()
 
-    # Approve 2 NFTs to lock into a SUNFT
-    nft.approve(gambit.address, 0, {"from": creator})
-    nft.approve(gambit.address, 1, {"from": creator})
-
-    # Mint the SUNFT directly to its owner, append the 2nd NFT after mint
-    gambit.mint(nft.address, 0, stream_rate, seven_days, owner, {"from": creator})
-    gambit.append(nft.address, 1, stream_rate, seven_days, 1, {"from": creator})
+    # # Approve 2 NFTs to lock into a SUNFT
+    # nft.approve(gambit.address, 0, {"from": creator})
+    # nft.approve(gambit.address, 1, {"from": creator})
+    #
+    # # Mint the SUNFT directly to its owner, append the 2nd NFT after mint
+    # _sunft_id = gambit.mint(nft.address, 0, stream_rate, seven_days, owner, {"from": creator}).return_value
+    # gambit.append(nft.address, 1, stream_rate, seven_days, 1, {"from": creator})
 
     # Check properties of the SUNFT created
-    assert gambit.ownerOf(1) == owner
-    assert gambit.getCreator(1) == creator
-    assert gambit.getLastStartedAt(1) == 0
-    assert gambit.getCurrentIndex(1) == 0
-    assert gambit.getPrincipal(1) == 0
-    assert gambit.getProgress(1) == 0
+    assert gambit.ownerOf(sunft) == owner
+    assert gambit.getCreator(sunft) == creator
+    assert gambit.getLastStartedAt(sunft) == 0
+    assert gambit.getCurrentIndex(sunft) == 0
+    assert gambit.getPrincipal(sunft) == 0
+    assert gambit.getProgress(sunft) == 0
     assert nft.ownerOf(0) == gambit.address
+    assert nft.ownerOf(1) == gambit.address
     # TODO: Implement fee
     # assert gambit.balance() - starting_eth == MINTING_FEE
 
     # Check properties for the NFTs in the SUNFT
-    assert gambit.getNumberOfNFTs(1) == 2
-    assert gambit.getContractAddress(1, 0) == nft.address
-    assert gambit.getTokenId(1, 0) == 0
-    assert gambit.getRate(1, 0) == stream_rate
-    assert gambit.getDuration(1, 0) == seven_days
-    assert gambit.getLock(1, 0) == True
+    assert gambit.getNumberOfNFTs(sunft) == 2
+    assert gambit.getContractAddress(sunft, 0) == nft.address
+    assert gambit.getTokenId(sunft, 0) == 0
+    assert gambit.getRate(sunft, 0) == stream_rate
+    assert gambit.getDuration(sunft, 0) == seven_days
+    assert gambit.getLock(sunft, 0) == True
     assert gambit.getContractAddress(1, 1) == nft.address
-    assert gambit.getTokenId(1, 1) == 1
-    assert gambit.getRate(1, 1) == stream_rate
-    assert gambit.getDuration(1, 1) == seven_days
-    assert gambit.getLock(1, 1) == True
+    assert gambit.getTokenId(sunft, 1) == 1
+    assert gambit.getRate(sunft, 1) == stream_rate
+    assert gambit.getDuration(sunft, 1) == seven_days
+    assert gambit.getLock(sunft, 1) == True
