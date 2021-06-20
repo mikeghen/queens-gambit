@@ -32,6 +32,11 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
 
     StreamUnlockableNFT[] sunfts; // All SUNFTs
 
+    modifier onlyCreator(uint256 tokenId) {
+      require(sunfts[tokenId].creator == msg.sender);
+      _;
+    }
+
     constructor () public ERC721 ("Stream Unlockable NFT", "SUNFT"){
       // Initialize a blank SUNFT at index 0
       sunfts.push(); //
@@ -61,6 +66,23 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
       return sunftId;
     }
 
+    function append(address contractAddress, uint256 tokenId, uint256 rate, uint256 duration, uint256 sunftId)
+      onlyCreator(tokenId) public returns(uint256) {
+
+      // Initialize a new SUNFT
+      // TODO: Dry this out?
+      uint256 index = sunfts[sunftId].nfts.length;
+      sunfts.push();
+      LockableNFT memory lnft = LockableNFT(contractAddress, tokenId, rate, duration, true);
+      sunfts[sunftId].creator = msg.sender;
+      sunfts[sunftId].nfts.push(lnft);
+      sunfts[sunftId].nfts[index].contractAddress = contractAddress;
+      sunfts[sunftId].nfts[index].tokenId = tokenId;
+      sunfts[sunftId].nfts[index].rate = rate;
+      sunfts[sunftId].nfts[index].duration = duration;
+
+    }
+
     function getCreator(uint256 sunftId) external view returns (address) {
       return sunfts[sunftId].creator;
     }
@@ -75,6 +97,10 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
     }
     function getProgress(uint256 sunftId) external view returns (uint256) {
       return sunfts[sunftId].progress;
+    }
+
+    function getNumberOfNFTs(uint256 sunftId) external view returns (uint256) {
+      return sunfts[sunftId].nfts.length;
     }
 
     function getContractAddress(uint256 sunftId, uint256 nftIndex) external view returns (address) {
