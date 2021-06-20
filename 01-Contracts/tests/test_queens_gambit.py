@@ -2,21 +2,6 @@ from brownie import accounts, reverts, StreamUnlockableNFTFactory
 from brownie.network.state import Chain
 import pytest
 
-"""
-"""
-
-# Contract addresses for Rinkeby
-SUPERFLUID_HOST_ADDRESS = ""
-SUPERFLUID_CFA_ADDRESS = ""
-SUPERFLUID_IDA_ADDRESS = ""
-DAIX_ADDRESS = ""
-DAI_ADDRESS = ""
-SEVEN_DAYS = 60 * 60 * 24 * 7 + 60    # plus 1 min. on each
-THIRTY_DAYS = 60 * 60 * 24 * 30 + 60
-STREAM_RATE = 1000 # wei per second
-MINTING_FEE = 1e18 # 1 ether
-
-
 # Canary Test
 def test_account_balance():
     balance = accounts[0].balance()
