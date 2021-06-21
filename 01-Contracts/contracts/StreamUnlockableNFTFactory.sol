@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "OpenZeppelin/openzeppelin-contracts@4.0.0/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "OpenZeppelin/openzeppelin-contracts@4.0.0/contracts/token/ERC721/IERC721.sol";
+import "OpenZeppelin/openzeppelin-contracts@4.0.0/contracts/token/ERC20/IERC20.sol";
 import "OpenZeppelin/openzeppelin-contracts@4.0.0/contracts/utils/Counters.sol";
 
 contract StreamUnlockableNFTFactory is ERC721URIStorage {
@@ -20,7 +21,7 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
     struct StreamUnlockableNFT {
       uint256 updatedAt;                     // The last time a stream was updated
       uint256 progress;                      // The amount of time that streaming has happened so far
-      uint256 currentNftIndex;               // Tracks the current index within `nfts`
+      uint256 currentIndex;                  // Tracks the current index within `nfts`
       uint256 principal;                     // The cumulative amount streamed into this SUNFT
       address creator;                       // The address of an ERC721 contract of the NFT
       LockableNFT[] nfts;
@@ -37,10 +38,12 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
       _;
     }
 
-    constructor () public ERC721 ("Stream Unlockable NFT", "SUNFT"){
+    constructor (address _depositToken, uint256 _mintingFee) public ERC721 ("Stream Unlockable NFT", "SUNFT"){
       // Initialize a blank SUNFT at index 0
       sunfts.push(); //
-      mintingFee = 1e18;
+      mintingFee = _mintingFee;
+      depositToken = _depositToken;
+      queen = msg.sender;
     }
 
     function mint(address contractAddress, uint256 tokenId, uint256 rate, uint256 duration, address recipient) public payable returns (uint256) {
@@ -86,6 +89,23 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
 
     }
 
+    function deposit(uint256 sunftId, uint256 amount) external {
+      require(IERC20(depositToken).transferFrom(msg.sender, address(this), amount), "!transferable");
+      sunfts[sunftId].principal += amount;
+      sunfts[sunftId].updatedAt = block.timestamp;
+    }
+
+    function tryUnlock(uint256 sunftId) external {
+      sunfts[sunftId].progress += block.timestamp - sunfts[sunftId].updatedAt;
+      LockableNFT memory lnft = sunfts[sunftId].nfts[sunfts[sunftId].currentIndex];
+      if (sunfts[sunftId].progress >= lnft.duration && sunfts[sunftId].principal >= lnft.rate * lnft.duration ) {
+        IERC721(lnft.contractAddress).transferFrom(address(this), msg.sender, lnft.tokenId);
+        sunfts[sunftId].nfts[sunfts[sunftId].currentIndex].locked = false;
+        sunfts[sunftId].currentIndex += 1;
+        sunfts[sunftId].progress = 0;
+      }
+    }
+
     function getCreator(uint256 sunftId) external view returns (address) {
       return sunfts[sunftId].creator;
     }
@@ -93,11 +113,12 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
       return sunfts[sunftId].updatedAt;
     }
     function getCurrentIndex(uint256 sunftId) external view returns (uint256) {
-      return sunfts[sunftId].currentNftIndex;
+      return sunfts[sunftId].currentIndex;
     }
     function getPrincipal(uint256 sunftId) external view returns (uint256) {
       return sunfts[sunftId].principal;
     }
+
     function getProgress(uint256 sunftId) external view returns (uint256) {
       return sunfts[sunftId].progress;
     }

@@ -3,9 +3,12 @@ from brownie import (
     config,
     network,
     accounts,
+    Token,
     StreamUnlockableNFTFactory,
     SimpleNFT,
 )
+from brownie import Token
+
 
 
 @pytest.fixture
@@ -24,9 +27,13 @@ def owner(accounts):
     return accounts[2]
 
 @pytest.fixture
-def gambit(SimpleNFT, queen, creator, owner):
+def dai(owner, Token):
+    return owner.deploy(Token, "DAI", "DAI", 18, 1000 * 10**18)
+
+@pytest.fixture
+def gambit(queen, dai):
     """An NFT contract with a few NFTs minted to creator"""
-    _nft = queen.deploy(StreamUnlockableNFTFactory)
+    _nft = queen.deploy(StreamUnlockableNFTFactory, dai.address, 1e18)
     return _nft
 
 @pytest.fixture

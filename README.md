@@ -64,7 +64,7 @@ _3 Cyrpto Corgis are wrapped together and locked in a contract to create a singl
   * all `nftsToLock` are transferred to this contract
   * 1 SUNFT is transferred to `msg.sender`
 
-#### start(uint256 sunftId)
+#### deposit(uint256 sunftId)
 * Parameters
   * `sunftId` - The id of the SUNFT to start streaming `feedToken` to
 * Pre-conditions
