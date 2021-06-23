@@ -38,6 +38,12 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
       _;
     }
 
+    // 
+    modifier onlyQueen() {
+      require(msg.sender == queen);
+      _;
+    }
+
     constructor (address _depositToken, uint256 _mintingFee) public ERC721 ("Stream Unlockable NFT", "SUNFT"){
       // Initialize a blank SUNFT at index 0
       sunfts.push(); //
@@ -47,6 +53,9 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
     }
 
     function mint(address contractAddress, uint256 tokenId, uint256 rate, uint256 duration, address recipient) public payable returns (uint256) {
+      // Require a fee to be paid in ETH (MATIC)
+      require(msg.value >= mintingFee, "You must pay the minting fee");
+      
       // Transfer the NFT into the contract
       IERC721(contractAddress).transferFrom(msg.sender, address(this), tokenId);
 
@@ -104,6 +113,12 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
         sunfts[sunftId].currentIndex += 1;
         sunfts[sunftId].progress = 0;
       }
+    }
+
+    // TODO: test the changeFee changes fee
+    function changeMintingFee(uint256 newFee) external 
+      onlyQueen() {
+      mintingFee = newFee;
     }
 
     function getCreator(uint256 sunftId) external view returns (address) {

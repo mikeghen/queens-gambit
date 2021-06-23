@@ -19,10 +19,13 @@ Test Suite Outline
 - SUNFTs will return locked NFTs to the creator if destoryed before unlocking
 """
 #
-def test_mint_snuft(gambit, nft, sunft, creator, owner, stream_rate, seven_days):
+def test_mint_snuft(gambit, nft, sunft, creator, owner, stream_rate, seven_days, minting_fee):
     """
     SUNFTs can be minted by an NFT holder and can be contain multiple NFTs
     """
+
+    starting_eth = gambit.balance()
+
     # First SUNFT minted in conftest.py
 
     # Check properties of the SUNFT created

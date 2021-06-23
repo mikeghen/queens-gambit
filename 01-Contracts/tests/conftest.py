@@ -61,13 +61,19 @@ def minting_fee():
     return 1e18
 
 @pytest.fixture
-def sunft(nft, gambit, queen, creator, owner, seven_days, stream_rate):
+def sunft(nft, gambit, queen, creator, owner, seven_days, stream_rate,minting_fee):
     # Approve 2 NFTs to lock into a SUNFT
     nft.approve(gambit.address, 0, {"from": creator})
     nft.approve(gambit.address, 1, {"from": creator})
 
     # Mint the SUNFT directly to its owner, append the 2nd NFT after mint
-    _sunft_id = gambit.mint(nft.address, 0, stream_rate, seven_days, owner, {"from": creator}).return_value
+    bal = creator.balance()
+
+    _sunft_id = gambit.mint(nft.address, 0, stream_rate, seven_days, owner, {"from": creator, "value": 10**18}).return_value
     gambit.append(nft.address, 1, stream_rate, seven_days, 1, {"from": creator})
+
+    after_mint_bal = creator.balance()
+
+    assert bal - after_mint_bal == minting_fee
 
     return _sunft_id
