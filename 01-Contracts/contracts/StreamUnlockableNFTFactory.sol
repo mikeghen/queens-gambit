@@ -23,7 +23,8 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
       uint256 progress;                      // The amount of time that streaming has happened so far
       uint256 currentIndex;                  // Tracks the current index within `nfts`
       uint256 principal;                     // The cumulative amount streamed into this SUNFT
-      address creator;                       // The address of an ERC721 contract of the NFT
+      address creator;                       // Minter of the SUNFT (The address of an ERC721 contract of the NFT)
+      bool isDestroyed;                      // Whether the SUNFT has been destroyed (has core SUNFT functionality disabled)
       LockableNFT[] nfts;
     }
 
@@ -33,14 +34,20 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
 
     StreamUnlockableNFT[] sunfts; // All SUNFTs
 
-    modifier onlyCreator(uint256 tokenId) {
-      require(sunfts[tokenId].creator == msg.sender);
+    // TODO: make isNotDestroyed modifier - based on snuftId, change identity access mgmt for according functions
+
+    modifier isNotDestroyed(uint256 sunftId) {
+      require(sunfts[sunftId].isDestroyed == false, "This SUNFT has been destroyed");
       _;
     }
 
-    // 
+    modifier onlyCreator(uint256 sunftId) {
+      require(sunfts[sunftId].creator == msg.sender, "You are not the creator of this SUNFT");
+      _;
+    }
+ 
     modifier onlyQueen() {
-      require(msg.sender == queen);
+      require(msg.sender == queen, "You are not the owner");
       _;
     }
 
@@ -79,7 +86,7 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
     }
 
     function append(address contractAddress, uint256 tokenId, uint256 rate, uint256 duration, uint256 sunftId)
-      onlyCreator(tokenId) public returns(uint256) {
+      onlyCreator(sunftId) isNotDestroyed(sunftId) public returns(uint256) {
 
       // Transfer the NFT into the contract
       IERC721(contractAddress).transferFrom(msg.sender, address(this), tokenId);
@@ -98,13 +105,19 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
 
     }
 
-    function deposit(uint256 sunftId, uint256 amount) external {
+    // TODO: Superfluid start stream
+    function deposit(uint256 sunftId, uint256 amount) 
+      isNotDestroyed(sunftId) external {
+
       require(IERC20(depositToken).transferFrom(msg.sender, address(this), amount), "!transferable");
       sunfts[sunftId].principal += amount;
       sunfts[sunftId].updatedAt = block.timestamp;
     }
 
-    function tryUnlock(uint256 sunftId) external {
+    // if the "stop" function (not implemented yet) calls this upon stream cancellation, perhaps this should be public instead of external
+    function tryUnlock(uint256 sunftId) 
+      isNotDestroyed(sunftId) external {
+
       sunfts[sunftId].progress += block.timestamp - sunfts[sunftId].updatedAt;
       LockableNFT memory lnft = sunfts[sunftId].nfts[sunfts[sunftId].currentIndex];
       if (sunfts[sunftId].progress >= lnft.duration && sunfts[sunftId].principal >= lnft.rate * lnft.duration ) {
@@ -115,8 +128,25 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
       }
     }
 
+    function destroy(uint256 sunftId) external 
+      onlyCreator(tokenId) {
+
+        // where in this contract are we burning the NFTs?
+        // How do you burn all the NFTs at once without a loop?
+
+        sunfts[sunftId].isDestroyed = true;
+
+      }
+
+    // Recover NFTs from a destroyed SNUFT
+    function recover(uint256 sunftId, uint256 lockableNFTIndex) {
+
+    }
+
+    // TODO: make a burn function that destorys token by SNUFT ID
+
     // TODO: test the changeFee changes fee
-    function changeMintingFee(uint256 newFee) external 
+    function setMintingFee(uint256 newFee) external 
       onlyQueen() {
       mintingFee = newFee;
     }
