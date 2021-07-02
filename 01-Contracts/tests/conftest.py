@@ -21,7 +21,7 @@ def creator(accounts):
     """Creator of the SUNFT, owner of some NFTs"""
     return accounts[1]
 
-@pytest.fixture
+@pytest.fixture()
 def owner(accounts):
     """Owner of the SUNFT"""
     return accounts[2]
@@ -45,6 +45,12 @@ def nft(SimpleNFT, queen, creator, owner):
     return _nft
 
 @pytest.fixture
+def initial_creator_balance(creator):
+    # Use this fixture before other activities/fixtures to capture initial ETH balance of creator account
+    init_creator_bal = creator.balance()
+    return init_creator_bal                
+
+@pytest.fixture
 def seven_days():
     return 60 * 60 * 24 * 7 + 60    # plus 1 min.
 
@@ -66,14 +72,7 @@ def sunft(nft, gambit, queen, creator, owner, seven_days, stream_rate,minting_fe
     nft.approve(gambit.address, 0, {"from": creator})
     nft.approve(gambit.address, 1, {"from": creator})
 
-    # Mint the SUNFT directly to its owner, append the 2nd NFT after mint
-    bal = creator.balance()
-
-    _sunft_id = gambit.mint(nft.address, 0, stream_rate, seven_days, owner, {"from": creator, "value": 10**18}).return_value
+    _sunft_id = gambit.mint(nft.address, 0, stream_rate, seven_days-3600, owner, {"from": creator, "value": 10**18}).return_value
     gambit.append(nft.address, 1, stream_rate, seven_days, 1, {"from": creator})
-
-    after_mint_bal = creator.balance()
-
-    assert bal - after_mint_bal == minting_fee
 
     return _sunft_id
