@@ -321,6 +321,9 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage, SuperAppBase {
     function getDestroyed(uint256 sunftId) external view returns (bool) {
       return sunfts[sunftId].isDestroyed;
     }
+        function getSNUFTRate(uint256 sunftId) external view returns (uint256) {
+      return sunfts[sunftId].rate;
+    }
     function getContractAddress(uint256 sunftId, uint256 nftIndex) external view returns (address) {
       return sunfts[sunftId].nfts[nftIndex].contractAddress;
     }

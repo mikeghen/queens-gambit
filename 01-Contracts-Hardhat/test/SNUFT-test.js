@@ -126,9 +126,18 @@ describe("StreamUnlockableNFTFactory", () => {
 
         it("Call deposit on stream initiation callback", async function() {
             
+            // (probably should be done in `before`)
+            // Mint 2 NFTs and append them to the SNUFT through a mint and then append (the way it's done in the sunft fixture in brownie)
+
+            // user opens stream to app of 1001 Dai/month
+
+            // check that the SNUFT's rate is equal to 1001 with getSNUFTRate
             
-            
-            expect((100).to.equal(100),"not equal!!")
+            // sleep 7 days
+
+            // check that principal equals rate (so, 1001) times 7 days
+
+            // check that DAIx balance is pretty close to expected principal from above
 
         });
     });
