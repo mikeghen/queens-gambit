@@ -5,6 +5,7 @@ from brownie import (
     accounts,
     Token,
     StreamUnlockableNFTFactory,
+    SFStreamUnlockableNFTFactory,
     SimpleNFT,
 )
 from brownie import Token
@@ -32,8 +33,13 @@ def dai(owner, Token):
 
 @pytest.fixture
 def gambit(queen, dai):
-    """An NFT contract with a few NFTs minted to creator"""
     _nft = queen.deploy(StreamUnlockableNFTFactory, dai.address, 1e18)
+    return _nft
+
+@pytest.fixture
+def SFgambit(queen,dai):
+    """Deploying SNUFT contract with rate logic for separate testing"""
+    _nft = queen.deploy(SFStreamUnlockableNFTFactory, dai.address, 1e18)
     return _nft
 
 @pytest.fixture
@@ -76,3 +82,15 @@ def sunft(nft, gambit, queen, creator, owner, seven_days, stream_rate,minting_fe
     gambit.append(nft.address, 1, stream_rate, seven_days, 1, {"from": creator})
 
     return _sunft_id
+
+@pytest.fixture
+def SFsunft(nft, SFgambit, queen, creator, owner, seven_days, stream_rate,minting_fee):
+        # Approve 2 NFTs to lock into a SUNFT
+    nft.approve(SFgambit.address, 0, {"from": creator})
+    nft.approve(SFgambit.address, 1, {"from": creator})
+
+    _sunft_id = SFgambit.mint(nft.address, 0, stream_rate, seven_days, owner, {"from": creator, "value": 10**18}).return_value
+    SFgambit.append(nft.address, 1, stream_rate, seven_days, 1, {"from": creator})
+
+    return _sunft_id
+
