@@ -195,8 +195,8 @@ def test_destroy_one_unlocked(gambit, dai, nft, sunft, creator, owner, queen, st
     assert gambit.getPrincipal(sunft) == 0
 
 
-# def test_setMintingFee(gambit, dai, nft, sunft, creator, owner, queen, stream_rate, seven_days):
+def test_setMintingFee(gambit, dai, nft, sunft, creator, owner, queen, stream_rate, seven_days):
     
-#     gambit.setMintingFee(2e18,{"from":queen})
+    gambit.setMintingFee(2e18,{"from":queen})
 
-#     assert gambit.getMintingFee() == 2e18
+    assert gambit.getMintingFee() == 2e18
