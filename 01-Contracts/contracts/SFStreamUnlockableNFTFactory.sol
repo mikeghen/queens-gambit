@@ -6,7 +6,7 @@ import "OpenZeppelin/openzeppelin-contracts@4.0.0/contracts/token/ERC721/IERC721
 import "OpenZeppelin/openzeppelin-contracts@4.0.0/contracts/token/ERC20/IERC20.sol";
 import "OpenZeppelin/openzeppelin-contracts@4.0.0/contracts/utils/Counters.sol";
 
-contract StreamUnlockableNFTFactory is ERC721URIStorage {
+contract SFStreamUnlockableNFTFactory is ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private sunftCounter;
 
@@ -24,6 +24,7 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
       bool initDeposit;                      // See if an initial deposit has been made on the SNUFT
       uint256 currentIndex;                  // Tracks the current index within `nfts` that's up to be unlocked
       uint256 principal;                     // The cumulative amount streamed into this SUNFT
+      uint256 rate;                          // rate at which the owner of the NFT is currently streaming into the app for the SNUFT
       uint256 tokenId;                       // The tokenID of the SNUFT represented by the struct
       address creator;                       // Minter of the SUNFT (The address of an ERC721 contract of the NFT)
       bool isDestroyed;                      // Whether the SUNFT has been destroyed (has core SUNFT functionality disabled)
@@ -120,11 +121,12 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
     // TODO: Superfluid start stream
     // TODO: eventually, stream will have to intelligently start/stop if SUNFT is destroyed. This stop logic might be initiated in destroy function
     // Make it such that you can only call deposit once. Need to simplify for tryUnlock
-    function deposit(uint256 sunftId, uint256 amount) 
+    function deposit(uint256 sunftId, uint256 flowRate) 
       isNotDestroyed(sunftId) external {
 
-      require(IERC20(depositToken).transferFrom(msg.sender, address(this), amount), "!transferable");
-      sunfts[sunftId].principal += amount;
+      // require(IERC20(depositToken).transferFrom(msg.sender, address(this), amount), "!transferable");
+      sunfts[sunftId].rate = flowRate;
+      // sunfts[sunftId].principal += amount;
       if (sunfts[sunftId].initDeposit != true) {
         sunfts[sunftId].updatedAt = block.timestamp;
         sunfts[sunftId].initDeposit = true;
@@ -138,6 +140,7 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
       // (&&) set equal instead?
       // sunfts[sunftId].progress += block.timestamp - sunfts[sunftId].updatedAt;
       sunfts[sunftId].progress += block.timestamp - sunfts[sunftId].updatedAt;
+      sunfts[sunftId].principal += sunfts[sunftId].rate * (block.timestamp - sunfts[sunftId].updatedAt);
       // First NFT that's appended is the first that can be withdrawn (FIFO), determined by the currentIndex
       LockableNFT memory lnft = sunfts[sunftId].nfts[sunfts[sunftId].currentIndex];
       // The second conditional would be effective for the trying to unlock the first SUNFT, but...
@@ -236,4 +239,3 @@ contract StreamUnlockableNFTFactory is ERC721URIStorage {
     }
 
 }
-
